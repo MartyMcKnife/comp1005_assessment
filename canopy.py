@@ -10,15 +10,23 @@ Version History:
 
 """
 import numpy as np
+import math
+
+# maps a size value (0~n) between 1 and 0
+# used to make the size of the object play a part in how quick it heats up
+def sigmoid(x):
+    return 1/(1+math.exp(-2/x))
+    
 
 
 class Item:
-    def __init__(self, pos, colour, size, name, thermal_coeff):
+    def __init__(self, pos, colour, size, name, thermal_coeff, temp):
         self.pos = pos
         self.colour_code = colour
         self.size = size  # symmetrical, if noy, need height and width
         self.name = name
         self.thermal = thermal_coeff
+        self.temp = temp
 
     def get_image(self):
         s = self.size
@@ -39,6 +47,11 @@ class Item:
 
     def get_colour(self):
         return self.colour_code
+    
+    def update_temp(self, surrounding_temps):
+        temp_arr = [temp * self.thermal * sigmoid(self.size) for temp in surrounding_temps]
+        
+        self.temp = np.average(temp_arr)
 
     def set_size(self, size):
         self.size = size
@@ -54,7 +67,14 @@ class Tree(Item):
     def __init__(self, pos, colour, size):
         name = "Tree"
         thermal_coeff = 0.8
-        super().__init__(pos, colour, size, name, thermal_coeff)
+        super().__init__(pos, colour, size, name, thermal_coeff, 25)
+        
+
+class House(Item):
+    def __init__(self, pos, colour, size):
+        name = "House"
+        thermal_coeff = 0.3
+        super().__init__(pos, colour, size, name, thermal_coeff, 25)
 
 
 class Block:
