@@ -16,16 +16,18 @@
 
 Needs 6 features for full marks:
 
-- Simulation step through
-- heatmap
-- rgb
-- water, terrain and animals objects
-- input file and command line parsing
-- variation in blocks
+- Simulation step through - DONE
+- heatmap - DONE
+- rgb - DONE
+- water, terrain and animals objects - TBD kinda done
+- input file and command line parsing - TBD
+- variation in blocks - TBD kinda done
 
 Needs 6 bonus features for extra marks
 
-- output simulation to csv
-- click through simulation in matplotlib?
+- output simulation to csv - NEED TO DO
+- click through simulation in matplotlib? - NEED TO DO
 - uhhh idk see how we go
-- try to implement rgb view on heat view cause that would be pretty cool
+- try to implement rgb view on heat view cause that would be pretty cool - NEED TO DO
+
+### CLEAN UP CODE PLEASE
