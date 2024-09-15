@@ -10,7 +10,6 @@ Version History:
 
 """
 import numpy as np
-from utils import sigmoid
 
 
 class Item:
@@ -37,15 +36,17 @@ class Item:
         ytop = self.pos[1] - self.size // 2
         return (xleft, ytop)
 
-    def update_temp(self, surrounding_temps):
-        # for the temps arround the object, average them by the items thermal_coeff (how well it takes in heat)
-        # and its size, mapped between 0 and 1
-        temp_arr = [
-            temp * self.thermal * sigmoid(self.size)
-            for temp in surrounding_temps
-        ]
+    def check_inside(self, y, x):
+        x_top, y_top = self.get_topleft()
+        x_len, y_len = self.get_shape()
 
-        self.temp = np.average(temp_arr)
+        # not very elegant way to check if item is inside bounding box
+        return (
+            x_top <= x
+            and x <= x_top + x_len
+            and y_top <= y
+            and y <= y_top + y_len
+        )
 
 
 class Tree(Item):
@@ -83,49 +84,65 @@ class Block:
     def add_item(self, item):
         self.items.append(item)
 
-    def generate_image(self, heat=False):
+    def generate_item(self, item, heat):
+        topleft = item.get_topleft()  # topleft coord of item within Block
+        (img_x, img_y) = item.get_shape()
+        cx_start = topleft[0]  # x is columns
+        ry_start = topleft[1]  # y is rows
+        cx_stop = cx_start + img_y
+        ry_stop = ry_start + img_x
+
+        img = item.get_image(heat)  # 1D image of item (not 3D rgb)
+
+        self.grid[ry_start:ry_stop, cx_start:cx_stop] = img
+
+    def generate_grid(self, heat=False):
         # create an array full of the values of our bg colour that we set
-        # use heat value of 0 if we are in heatmap mode
         self.grid = np.full((self.x, self.y), 0 if heat else self.color)
 
         for item in self.items:
-            topleft = item.get_topleft()  # topleft coord of item within Block
-            (img_x, img_y) = item.get_shape()
-            cx_start = topleft[0]  # x is columns
-            ry_start = topleft[1]  # y is rows
-            cx_stop = cx_start + img_y
-            ry_stop = ry_start + img_x
+            self.generate_item(item, heat)
+        return self.grid
 
-            # update our heat
+    def update_heatmap(self):
+        # create temporary array to hold our updated values
+        temp_grid = np.zeros(self.grid.shape)
+        # loop through every element in the grid
+        for y, x in np.ndindex(self.grid.shape):
+            y_max, x_max = self.grid.shape
+            # get our surrounding temps
+            # if the temp is out of bounds (on an edge), we ignore the value
+            top_temp = (self.grid[y - 1, x] if y > 0 else 0,)
+            bottom_temp = (self.grid[y + 1, x] if y < y_max - 1 else 0,)
+            left_temp = (self.grid[y, x - 1] if x > 0 else 0,)
+            right_temp = (self.grid[y, x + 1] if x < x_max - 1 else 0,)
 
-            if heat:
-                # slice out cutout that is 1 pixel wider than our image
-                sub_grid = self.grid[ry_start-1:ry_stop+1, cx_start-1:cx_stop+1]
-                # temporary indexer
-                i = 1
-                # check to see if the grid is 0 degrees (needs heat)
-                while not np.any(sub_grid):
-                    
-                    
+            # check if this cell is inside an item
+            # if it is, take our items thermal_coeff into account
+            item_thermal_coeff = 1
+            for item in self.items:
+                if item.check_inside(y, x):
+                    item_thermal_coeff = self.thermal_coeff
 
-
-            
-                item.update_temp()
-            img = item.get_image(heat)  # 1D image of item (not 3D rgb)
-
-            self.grid[ry_start:ry_stop, cx_start:cx_stop] = img
-        return grid
+            # update the cells temp based on the average of the surrounding squares, and the cells thermal coefficient
+            temps = [top_temp, bottom_temp, left_temp, right_temp]
+            # we divide our cell's thermal coefficient by the items thermal coeff to get a nice ratio between how much heat we gain vs loss
+            temp_grid[y, x] = np.average(temps) * (
+                self.thermal_coeff / item_thermal_coeff
+            )
+        self.grid = temp_grid
+        return self.grid
 
 
 # instantiate our class to create the environment
 class Water(Block):
     def __init__(self, size, topleft):
-        super().__init__(size, topleft, 0, 1)
+        super().__init__(size, topleft, 0, 0.4)
 
 
 class Earth(Block):
     def __init__(self, size, topleft):
-        super().__init__(size, topleft, 12.5, 0.8)
+        super().__init__(size, topleft, 12.5, 0.9)
 
 
 class Dirt(Block):
@@ -135,4 +152,4 @@ class Dirt(Block):
 
 class Ice(Block):
     def __init__(self, size, topleft):
-        super().__init__(size, topleft, 50, 0.2)
+        super().__init__(size, topleft, 50, 0.3)

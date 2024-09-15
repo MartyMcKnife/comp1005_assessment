@@ -2,6 +2,7 @@ import numpy as np
 import math
 
 
+# used to generate our image for the first time
 def generate_image(b, s, mshape, heat=False):
     # create our grid - empty array of 0s
     grid = np.zeros((mshape[0] * s, mshape[1] * s))
@@ -15,7 +16,25 @@ def generate_image(b, s, mshape, heat=False):
         # update grid to represent whats expected in that corner
         grid[
             ry_start : ry_start + s, cx_start : cx_start + s
-        ] = block.generate_image(heat)
+        ] = block.generate_grid(heat)
+    return grid
+
+
+# recalculate our image
+def regenerate_image(b, s, mshape):
+    # create our grid - empty array of 0s
+    grid = np.zeros((mshape[0] * s, mshape[1] * s))
+    # loop through each block object
+    for block in b:
+        # get top left corner
+        (
+            cx_start,
+            ry_start,
+        ) = block.get_topleft()
+        # update grid to represent whats expected in that corner
+        grid[
+            ry_start : ry_start + s, cx_start : cx_start + s
+        ] = block.update_heatmap()
     return grid
 
 

@@ -28,3 +28,4 @@ Needs 6 bonus features for extra marks
 - output simulation to csv
 - click through simulation in matplotlib?
 - uhhh idk see how we go
+- try to implement rgb view on heat view cause that would be pretty cool

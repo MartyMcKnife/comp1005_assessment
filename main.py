@@ -10,7 +10,7 @@ Version History:
 import matplotlib.pyplot as plt
 
 from canopy import Tree, House, Earth, Water
-from utils import generate_image
+from utils import generate_image, regenerate_image
 
 THERMAL_COL = "hot"
 RGB_COL = "terrain"
@@ -30,13 +30,22 @@ def main():
     blocks[1].add_item(House((12, 6), 5))
 
     plt.imshow(
-        generate_image(blocks, blocksize, map_shape, heat=True),
+        generate_image(blocks, blocksize, map_shape, True),
         vmin=0,
         vmax=50,
         cmap=THERMAL_COL,
     )
     plt.colorbar()
     plt.show()
+    for i in range(0, 5):
+        plt.imshow(
+            regenerate_image(blocks, blocksize, map_shape),
+            vmin=0,
+            vmax=50,
+            cmap=THERMAL_COL,
+        )
+        plt.colorbar()
+        plt.show()
 
 
 if __name__ == "__main__":
