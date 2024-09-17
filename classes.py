@@ -9,6 +9,7 @@ Version History:
     - 11/9/24 - extended version released for tasks 3 & 4
 
 """
+
 import numpy as np
 
 
@@ -41,12 +42,7 @@ class Item:
         x_len, y_len = self.get_shape()
 
         # not very elegant way to check if item is inside bounding box
-        return (
-            x_top <= x
-            and x <= x_top + x_len
-            and y_top <= y
-            and y <= y_top + y_len
-        )
+        return x_top <= x and x <= x_top + x_len and y_top <= y and y <= y_top + y_len
 
 
 class Tree(Item):
@@ -77,6 +73,8 @@ class Block:
         self.timesteps = 0
         # empty var
         self.grid = ""
+        self.grid_gen = False
+        self.heatmap = ""
 
     def get_topleft(self):
         return self.topleft
@@ -97,12 +95,24 @@ class Block:
         self.grid[ry_start:ry_stop, cx_start:cx_stop] = img
 
     def generate_grid(self, heat=False):
-        # create an array full of the values of our bg colour that we set
-        self.grid = np.full((self.x, self.y), 0 if heat else self.color)
+        # only generate our grid if we don't have it
+        # if we don't have a heatmap, create one
+        if not self.grid_gen:
+            # create an array full of the values of our bg colour that we set
+            self.grid = np.full((self.x, self.y), 0 if heat else self.color)
 
-        for item in self.items:
-            self.generate_item(item, heat)
-        return self.grid
+            for item in self.items:
+                self.generate_item(item, heat)
+
+            # copy our grid out so we don't mutate original
+            # only copy if we originally passed  the heatmap
+
+            self.heatmap = self.grid
+
+            self.grid_gen = True
+
+        # return our grid only if we don't want the heatmap
+        return self.heatmap if heat else self.grid
 
     def update_heatmap(self):
         # create temporary array to hold our updated values
@@ -112,10 +122,10 @@ class Block:
             y_max, x_max = self.grid.shape
             # get our surrounding temps
             # if the temp is out of bounds (on an edge), we ignore the value
-            top_temp = (self.grid[y - 1, x] if y > 0 else 0,)
-            bottom_temp = (self.grid[y + 1, x] if y < y_max - 1 else 0,)
-            left_temp = (self.grid[y, x - 1] if x > 0 else 0,)
-            right_temp = (self.grid[y, x + 1] if x < x_max - 1 else 0,)
+            top_temp = (self.heatmap[y - 1, x] if y > 0 else 0,)
+            bottom_temp = (self.heatmap[y + 1, x] if y < y_max - 1 else 0,)
+            left_temp = (self.heatmap[y, x - 1] if x > 0 else 0,)
+            right_temp = (self.heatmap[y, x + 1] if x < x_max - 1 else 0,)
 
             # check if this cell is inside an item
             # if it is, take our items thermal_coeff into account
@@ -130,8 +140,7 @@ class Block:
             temp_grid[y, x] = np.average(temps) * (
                 self.thermal_coeff / item_thermal_coeff
             )
-        self.grid = temp_grid
-        return self.grid
+        self.heatmap = temp_grid
 
 
 # instantiate our class to create the environment

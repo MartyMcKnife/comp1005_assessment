@@ -7,13 +7,16 @@ Student ID  :
 Version History:
     - 11/9/24 - original version released
 """
-import matplotlib.pyplot as plt
 
-from canopy import Tree, House, Earth, Water
-from utils import generate_image, regenerate_image
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Button, CheckButtons
+
+from classes import Tree, House, Earth, Water
+from utils import generate_image
 
 THERMAL_COL = "hot"
 RGB_COL = "terrain"
+heat = True
 
 
 def main():
@@ -29,23 +32,57 @@ def main():
     blocks[0].add_item(Tree((5, 15), 3))
     blocks[1].add_item(House((12, 6), 5))
 
-    plt.imshow(
-        generate_image(blocks, blocksize, map_shape, True),
+    # handler to update grid with button
+    def update_grid(e):
+        global heat
+        cmap = THERMAL_COL if heat else RGB_COL
+
+        for block in blocks:
+            block.update_heatmap()
+        ax.imshow(
+            generate_image(blocks, blocksize, map_shape, heat),
+            vmin=0,
+            vmax=50,
+            cmap=cmap,
+        )
+        plt.draw()
+
+    def update_heatmode(e):
+        global heat
+        print(heat)
+        heat = not heat
+        cmap = THERMAL_COL if heat else RGB_COL
+
+        print(cmap, heat)
+        ax.imshow(
+            generate_image(blocks, blocksize, map_shape, heat),
+            vmin=0,
+            vmax=50,
+            cmap=cmap,
+        )
+        plt.draw()
+
+    fig, ax = plt.subplots()
+
+    img = ax.imshow(
+        generate_image(blocks, blocksize, map_shape, heat),
         vmin=0,
         vmax=50,
         cmap=THERMAL_COL,
     )
-    plt.colorbar()
+
+    fig.subplots_adjust(bottom=0.2)
+
+    baxes = fig.add_axes([0.8, 0.05, 0.1, 0.075])
+    bnext = Button(baxes, "Simulate")
+    bnext.on_clicked(update_grid)
+
+    caxes = fig.add_axes([0.8, -0.05, 0.1, 0.075])
+    c_heat = Button(caxes, "Heatmap?")
+    c_heat.on_clicked(update_heatmode)
+
+    plt.colorbar(img)
     plt.show()
-    for i in range(0, 5):
-        plt.imshow(
-            regenerate_image(blocks, blocksize, map_shape),
-            vmin=0,
-            vmax=50,
-            cmap=THERMAL_COL,
-        )
-        plt.colorbar()
-        plt.show()
 
 
 if __name__ == "__main__":
