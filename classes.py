@@ -42,7 +42,12 @@ class Item:
         x_len, y_len = self.get_shape()
 
         # not very elegant way to check if item is inside bounding box
-        return x_top <= x and x <= x_top + x_len and y_top <= y and y <= y_top + y_len
+        return (
+            x_top <= x
+            and x <= x_top + x_len
+            and y_top <= y
+            and y <= y_top + y_len
+        )
 
 
 class Tree(Item):
@@ -57,6 +62,20 @@ class House(Item):
         name = "House"
         thermal_coeff = 0.3
         super().__init__(pos, 25, size, name, thermal_coeff, 25)
+
+
+class Person(Item):
+    def __init__(self, pos, size):
+        name = "Person"
+        thermal_coeff = 0.1
+        super().__init__(pos, 22, size, name, thermal_coeff, 25)
+
+
+class Fire(Item):
+    def __init__(self, pos, size):
+        name = "Fire"
+        thermal_coeff = 1
+        super().__init__(pos, 22, size, name, thermal_coeff, 25)
 
 
 class Block:

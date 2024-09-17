@@ -9,14 +9,16 @@ Version History:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Button, CheckButtons
+from matplotlib.widgets import Button
 
 from classes import Tree, House, Earth, Water
 from utils import generate_image
 
 THERMAL_COL = "hot"
 RGB_COL = "terrain"
-heat = True
+heat = False
+# holds our matplotlib color bar so we can reset it
+cb = ""
 
 
 def main():
@@ -49,17 +51,23 @@ def main():
 
     def update_heatmode(e):
         global heat
-        print(heat)
         heat = not heat
+
+        # work out our color paletter
         cmap = THERMAL_COL if heat else RGB_COL
 
-        print(cmap, heat)
-        ax.imshow(
+        # draw the image
+        img = ax.imshow(
             generate_image(blocks, blocksize, map_shape, heat),
             vmin=0,
             vmax=50,
             cmap=cmap,
         )
+
+        # redraw the colorbar
+        global cb
+        cb.remove()
+        cb = plt.colorbar(img)
         plt.draw()
 
     fig, ax = plt.subplots()
@@ -68,20 +76,23 @@ def main():
         generate_image(blocks, blocksize, map_shape, heat),
         vmin=0,
         vmax=50,
-        cmap=THERMAL_COL,
+        cmap=THERMAL_COL if heat else RGB_COL,
     )
+    global cb
+    cb = plt.colorbar(img)
 
     fig.subplots_adjust(bottom=0.2)
 
+    # draws simulate button
     baxes = fig.add_axes([0.8, 0.05, 0.1, 0.075])
     bnext = Button(baxes, "Simulate")
     bnext.on_clicked(update_grid)
 
-    caxes = fig.add_axes([0.8, -0.05, 0.1, 0.075])
+    # draws heatmap toggle button
+    caxes = fig.add_axes([0.45, 0.05, 0.15, 0.075])
     c_heat = Button(caxes, "Heatmap?")
     c_heat.on_clicked(update_heatmode)
 
-    plt.colorbar(img)
     plt.show()
 
 
