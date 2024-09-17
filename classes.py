@@ -82,7 +82,7 @@ class Block:
     def add_item(self, item):
         self.items.append(item)
 
-    def generate_item(self, item, heat):
+    def generate_item(self, item):
         topleft = item.get_topleft()  # topleft coord of item within Block
         (img_x, img_y) = item.get_shape()
         cx_start = topleft[0]  # x is columns
@@ -90,24 +90,23 @@ class Block:
         cx_stop = cx_start + img_y
         ry_stop = ry_start + img_x
 
-        img = item.get_image(heat)  # 1D image of item (not 3D rgb)
+        img_col = item.get_image()  # 1D image of item (not 3D rgb)
+        img_heat = item.get_image(True)
 
-        self.grid[ry_start:ry_stop, cx_start:cx_stop] = img
+        self.grid[ry_start:ry_stop, cx_start:cx_stop] = img_col
+        self.heatmap[ry_start:ry_stop, cx_start:cx_stop] = img_heat
 
     def generate_grid(self, heat=False):
         # only generate our grid if we don't have it
         # if we don't have a heatmap, create one
         if not self.grid_gen:
             # create an array full of the values of our bg colour that we set
-            self.grid = np.full((self.x, self.y), 0 if heat else self.color)
+            # create both a heatmap and colour map
+            self.grid = np.full((self.x, self.y), self.color)
+            self.heatmap = np.full((self.x, self.y), 0)
 
             for item in self.items:
-                self.generate_item(item, heat)
-
-            # copy our grid out so we don't mutate original
-            # only copy if we originally passed  the heatmap
-
-            self.heatmap = self.grid
+                self.generate_item(item)
 
             self.grid_gen = True
 
