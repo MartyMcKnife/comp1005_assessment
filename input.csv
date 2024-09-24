@@ -1,0 +1,7 @@
+id,class,type,size,x_pos,y_pos,owned_by
+1,block,water,
+2,block,earth
+3,item,rock,3,10,10,1
+4,item,rock,4,5,15,1
+4,item,tree,5,45,40,2
+5,item,house,8,55,35,2

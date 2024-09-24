@@ -53,6 +53,13 @@ class Tree(Item):
         super().__init__(pos, 37.5, size, name, thermal_coeff, 25)
 
 
+class Rock(Item):
+    def __init__(self, pos, size):
+        name = "Rock"
+        thermal_coeff = 0.4
+        super().__init__(pos, 45, size, name, thermal_coeff, 25)
+
+
 class House(Item):
     def __init__(self, pos, size):
         name = "House"

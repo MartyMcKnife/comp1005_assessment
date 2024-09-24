@@ -13,20 +13,27 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 from matplotlib.widgets import Button
 
+from pathlib import Path
+import os
+import shutil
+
 from classes import Tree, House, Earth, Water
 from utils import generate_image
 
 THERMAL_COL = "hot"
 RGB_COL = "terrain"
 heat = False
+timestep = 1
+
 # holds our matplotlib color bar so we can reset it
 cb = ""
 
 
 def main():
-    blocksize = 30  # each block is a 20x20 square
+    blocksize = 30  # defines resolution of heatmap
     map_shape = (2, 1)
     blocks = []
+    img_path = os.getcwd() + "/output_images"
 
     blocks.append(Water(blocksize, (0, 0)))
     blocks.append(Earth(blocksize, (0, blocksize)))
@@ -34,20 +41,25 @@ def main():
     blocks[0].add_item(Tree((10, 10), 3))
     blocks[0].add_item(Tree((5, 15), 3))
     blocks[1].add_item(House((12, 6), 5))
+    shutil.rmtree(img_path)
+    Path(img_path).mkdir(parents=True, exist_ok=True)
 
     # handler to draw temp grip
     def update_temp_plot():
-        for block in blocks:
-            temps = block.get_item_temps()
-            for temp in temps:
-
-                ax[1].plot(
-                    temp["temp"],
-                    label=temp["id"],
-                    color=cm.hot(Normalize(0, 50)(temp["col"])),
-                )
-                ax[1].set_xlabel("Timestep")
-                ax[1].set_ylabel("Temperature")
+        with open("output.txt", "w+") as w:
+            for block in blocks:
+                temps = block.get_item_temps()
+                for temp in temps:
+                    w.write(temp["id"] + "\n")
+                    for t in temp["temp"]:
+                        w.write(str(round(t, 2)) + "\n")
+                    ax[1].plot(
+                        temp["temp"],
+                        label=temp["id"],
+                        color=cm.hot(Normalize(0, 50)(temp["col"])),
+                    )
+                    ax[1].set_xlabel("Timestep")
+                    ax[1].set_ylabel("Temperature")
 
     # handler to update grid with button
     def update_grid(e):
@@ -64,6 +76,9 @@ def main():
         )
 
         update_temp_plot()
+        global timestep
+        timestep += 1
+        fig.savefig(img_path + "/Output" + str(timestep))
 
         plt.draw()
 
@@ -116,7 +131,7 @@ def main():
     fig.subplots_adjust(bottom=-0.2)
 
     fig.tight_layout()
-
+    fig.savefig(img_path + "/Output1.png")
     plt.show()
 
 
