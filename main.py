@@ -9,6 +9,8 @@ Version History:
 """
 
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
 from matplotlib.widgets import Button
 
 from classes import Tree, House, Earth, Water
@@ -22,9 +24,8 @@ cb = ""
 
 
 def main():
-    # there are many ways to set up the assignment, this is an example
-    blocksize = 20  # each block is a 20x20 square
-    map_shape = (2, 1)  # 2 rows of blocks, 1 column
+    blocksize = 30  # each block is a 20x20 square
+    map_shape = (2, 1)
     blocks = []
 
     blocks.append(Water(blocksize, (0, 0)))
@@ -34,6 +35,20 @@ def main():
     blocks[0].add_item(Tree((5, 15), 3))
     blocks[1].add_item(House((12, 6), 5))
 
+    # handler to draw temp grip
+    def update_temp_plot():
+        for block in blocks:
+            temps = block.get_item_temps()
+            for temp in temps:
+
+                ax[1].plot(
+                    temp["temp"],
+                    label=temp["id"],
+                    color=cm.hot(Normalize(0, 50)(temp["col"])),
+                )
+                ax[1].set_xlabel("Timestep")
+                ax[1].set_ylabel("Temperature")
+
     # handler to update grid with button
     def update_grid(e):
         global heat
@@ -41,12 +56,15 @@ def main():
 
         for block in blocks:
             block.update_heatmap()
-        ax.imshow(
+        ax[0].imshow(
             generate_image(blocks, blocksize, map_shape, heat),
             vmin=0,
             vmax=50,
             cmap=cmap,
         )
+
+        update_temp_plot()
+
         plt.draw()
 
     def update_heatmode(e):
@@ -57,7 +75,7 @@ def main():
         cmap = THERMAL_COL if heat else RGB_COL
 
         # draw the image
-        img = ax.imshow(
+        img = ax[0].imshow(
             generate_image(blocks, blocksize, map_shape, heat),
             vmin=0,
             vmax=50,
@@ -70,9 +88,9 @@ def main():
         cb = plt.colorbar(img)
         plt.draw()
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(1, 2)
 
-    img = ax.imshow(
+    img = ax[0].imshow(
         generate_image(blocks, blocksize, map_shape, heat),
         vmin=0,
         vmax=50,
@@ -81,17 +99,23 @@ def main():
     global cb
     cb = plt.colorbar(img)
 
-    fig.subplots_adjust(bottom=0.2)
+    update_temp_plot()
+
+    ax[1].legend()
 
     # draws simulate button
-    baxes = fig.add_axes([0.8, 0.05, 0.1, 0.075])
+    baxes = fig.add_axes([0.3, 0.01, 0.1, 0.075])
     bnext = Button(baxes, "Simulate")
     bnext.on_clicked(update_grid)
 
     # draws heatmap toggle button
-    caxes = fig.add_axes([0.45, 0.05, 0.15, 0.075])
+    caxes = fig.add_axes([0.05, 0.01, 0.15, 0.075])
     c_heat = Button(caxes, "Heatmap?")
     c_heat.on_clicked(update_heatmode)
+
+    fig.subplots_adjust(bottom=-0.2)
+
+    fig.tight_layout()
 
     plt.show()
 

@@ -11,6 +11,7 @@ Version History:
 """
 
 import numpy as np
+from random import uniform
 
 
 class Item:
@@ -42,12 +43,7 @@ class Item:
         x_len, y_len = self.get_shape()
 
         # not very elegant way to check if item is inside bounding box
-        return (
-            x_top <= x
-            and x <= x_top + x_len
-            and y_top <= y
-            and y <= y_top + y_len
-        )
+        return x_top <= x and x <= x_top + x_len and y_top <= y and y <= y_top + y_len
 
 
 class Tree(Item):
@@ -94,6 +90,7 @@ class Block:
         self.grid = ""
         self.grid_gen = False
         self.heatmap = ""
+        self.item_temps = []
 
     def get_topleft(self):
         return self.topleft
@@ -155,10 +152,43 @@ class Block:
             # update the cells temp based on the average of the surrounding squares, and the cells thermal coefficient
             temps = [top_temp, bottom_temp, left_temp, right_temp]
             # we divide our cell's thermal coefficient by the items thermal coeff to get a nice ratio between how much heat we gain vs loss
-            temp_grid[y, x] = np.average(temps) * (
-                self.thermal_coeff / item_thermal_coeff
+            # we also multiply by a slight amount of noise
+            temp_grid[y, x] = (
+                np.average(temps)
+                * (self.thermal_coeff / item_thermal_coeff)
+                * uniform(0.8, 1)
             )
         self.heatmap = temp_grid
+
+    def get_item_temps(self):
+        for idx, item in enumerate(self.items):
+            topleft = item.get_topleft()
+            (img_x, img_y) = item.get_shape()
+            cx_start = topleft[0]
+            ry_start = topleft[1]
+            cx_stop = cx_start + img_y
+            ry_stop = ry_start + img_x
+
+            avg_temp = np.average(self.heatmap[ry_start:ry_stop, cx_start:cx_stop])
+            # loop through and check to see if the temp has already been added
+            updated = False
+            for item_temp in self.item_temps:
+                # we have had temperature before; update
+                if item_temp["id"] == item.name + str(idx):
+                    item_temp["temp"].append(avg_temp)
+                    updated = True
+            # if we don't update, append
+            if not updated:
+                self.item_temps.append(
+                    {
+                        "name": item.name,
+                        "temp": [avg_temp],
+                        "id": item.name + str(idx),
+                        "col": item.colour_code,
+                    }
+                )
+
+        return self.item_temps
 
 
 # instantiate our class to create the environment
