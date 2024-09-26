@@ -1,12 +1,5 @@
 id,class,type,size,x_pos,y_pos,owned_by
-1,block,water
-2,block,earth
-3,block,earth
-4,block,parkland
-5,item,rock,3,10,10,1
-6,item,rock,3,5,15,1
-7,item,house,11,12,6,2
-8,item,house,6,16,15,2
-9,item,road,3,20,15,2
-10,item,house,8,26,16,2
-11,item,fire,6,15,15,4
+1,block,earth
+2,item,house,11,12,6,1
+3,item,tree,4,3,6,1
+3,item,tree,4,20,16,1
