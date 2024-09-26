@@ -68,7 +68,9 @@ def main(blocksize=30, col_count=2):
             elif vals[1].lower() == "item":
                 try:
                     blocks[int(vals[6]) - 1].add_item(
-                        item_lookup[vals[2]]((int(vals[4]), int(vals[5])), int(vals[3]))
+                        item_lookup[vals[2]](
+                            (int(vals[4]), int(vals[5])), int(vals[3])
+                        )
                     )
                 except IndexError as e:
                     print("Error when adding item. Skipping...")
@@ -100,13 +102,14 @@ def main(blocksize=30, col_count=2):
     # handler to draw temp grip
     def update_temp_plot():
         with open("output.csv", "w+") as w:
+            item_temps = []
             for block in blocks:
                 temps = block.get_item_temps()
+                # write the headers and extract the temp value
                 for temp in temps:
-                    w.write(temp["id"] + "\n")
-                    for t in temp["temp"]:
-                        w.write(str(round(t, 2)) + ",")
-                    w.write("\n")
+                    w.write(temp["id"] + ",")
+                    item_temps.append(temp["temp"])
+
                     ax[1].plot(
                         temp["temp"],
                         label=temp["id"],
@@ -114,6 +117,12 @@ def main(blocksize=30, col_count=2):
                     )
                     ax[1].set_xlabel("Timestep")
                     ax[1].set_ylabel("Temperature")
+            # clear new line from headers
+            w.write("\n")
+            # use the zip function to pair the temps together:
+            # de-construct the current temp list thingy
+            for item_temp in zip(*item_temps):
+                w.write(",".join(str(round(i, 2)) for i in item_temp) + "\n")
 
     # handler to update grid with button
     def update_grid(e):
