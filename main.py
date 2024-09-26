@@ -27,6 +27,7 @@ RGB_COL = "terrain"
 timestep = 1
 
 
+# read our configuration files
 def setup():
     config = ConfigParser()
     config.read("config.ini")
@@ -41,32 +42,44 @@ def main(blocksize=30, col_count=2):
     blocks = []
     img_path = os.getcwd() + "/output_images"
 
+    # count how many blocks we have
+    # honestly could just call len() everytime but this is ever so slightly more memory efficient
     blocks_added = 0
 
     with open("input.csv", "r") as f:
+        # read each line in csv file and parse it
         for line in f.readlines():
             vals = line.rstrip().split(",")
             if vals[1].lower() == "block":
                 try:
+                    # add our block
                     blocks.append(
+                        # find the class from the lookup table
                         block_lookup[vals[2]](
                             blocksize,
                             (
+                                # our row cycles between 0 -> 1 0 -> 1 or whatever our col_count - 1 is
+                                # we can take the floor of our blocks_added divide by the column count to find this number
                                 blocksize * ((blocks_added) // col_count),
+                                # the column increases by one for every n blocks, where n is the col_count
+                                # can just take the modulo of this
                                 blocksize * (blocks_added % col_count),
                             ),
                         )
                     )
                     blocks_added += 1
+                # handle undefined block type
                 except KeyError:
                     print(f"No block type found for {vals[2]}! Skipping...")
             elif vals[1].lower() == "item":
                 try:
+                    # really unelegant code but just adds the item to the block using the user defined values
                     blocks[int(vals[6]) - 1].add_item(
                         item_lookup[vals[2]](
                             (int(vals[4]), int(vals[5])), int(vals[3])
                         )
                     )
+                # handle index errror - maybe the user typed the wrong block id?
                 except IndexError as e:
                     print("Error when adding item. Skipping...")
                     print(e)
@@ -74,6 +87,7 @@ def main(blocksize=30, col_count=2):
                     print(f"No item type found for {vals[2]}! Skipping...")
 
         # pad out our grid if the user does not supply enough boxes
+        # uses the same positioning algorithm seen above
         while blocks_added % col_count != 0:
             blocks.append(
                 Water(
@@ -86,8 +100,10 @@ def main(blocksize=30, col_count=2):
             )
             blocks_added += 1
 
+    # calculate our map shape
     map_shape = (col_count, ceil(blocks_added / col_count))
 
+    # clear our output_images folder / create it if it doesn't exist
     try:
         shutil.rmtree(img_path)
     except FileNotFoundError:
@@ -95,7 +111,7 @@ def main(blocksize=30, col_count=2):
 
     Path(img_path).mkdir(parents=True, exist_ok=True)
 
-    # handler to draw temp grip
+    # handler to draw temp grid
     def update_temp_plot():
         with open("output.csv", "w+") as w:
             item_temps = []
@@ -169,7 +185,7 @@ def main(blocksize=30, col_count=2):
 
     fig.set_figwidth(10)
 
-    fig.subplots_adjust(bottom=-0.2)
+    fig.subplots_adjust(bottom=-0.25)
 
     fig.tight_layout()
     fig.savefig(img_path + "/Output1.png")
