@@ -39,7 +39,6 @@ _Please ensure that any blocks are defined before any items_
 
 Pass in the data in the following order:
 `id, block, type`
-Where
 
 - **id** is any non zero integer
 - **type** type is a list of valid block types (see below)
@@ -56,7 +55,6 @@ Where
 
 Pass in the data in the following order:
 `id, item, type, size, x_pos, y_pos, owned_by`
-Where
 
 - **id** is any non zero integer
 - **type** is a list of valid item types (see below)
