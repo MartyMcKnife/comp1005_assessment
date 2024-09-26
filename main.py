@@ -32,7 +32,7 @@ def setup():
     config.read("config.ini")
     settings = config["SIMULATION_SETTINGS"]
     resolution = settings.get("Resolution", 30)
-    cols = settings.get("Columns", 2)
+    cols = settings.get("Rows", 2)
     return int(resolution), int(cols)
 
 
