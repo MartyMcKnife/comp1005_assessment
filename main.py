@@ -22,6 +22,11 @@ from configparser import ConfigParser
 from classes import item_lookup, block_lookup, Water
 from utils import generate_image
 
+# ignore warnings
+import warnings
+
+warnings.filterwarnings("ignore")
+
 THERMAL_COL = "hot"
 RGB_COL = "terrain"
 timestep = 1
