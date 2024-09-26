@@ -15,6 +15,8 @@ from random import uniform
 
 from configparser import ConfigParser
 
+from utils import sigmoid
+
 
 class Item:
     def __init__(self, pos, colour, size, name):
@@ -90,12 +92,19 @@ class Fire(Item):
         super().__init__(pos, 30, size, name)
 
 
+class Road(Item):
+    def __init__(self, pos, size):
+        name = "Road"
+        super().__init__(pos, 45, size, name)
+
+
 item_lookup = {
     "tree": Tree,
     "rock": Rock,
     "house": House,
     "person": Person,
     "fire": Fire,
+    "road": Road,
 }
 
 
@@ -185,8 +194,7 @@ class Block:
             # we also multiply by a slight amount of noise
             temp_grid[y, x] = (
                 np.average(temps)
-                * 0.9
-                / (self.thermal_coeff * item_thermal_coeff)
+                * sigmoid((self.thermal_coeff * item_thermal_coeff))
                 * uniform(0.8, 1)
             )
         self.heatmap = temp_grid

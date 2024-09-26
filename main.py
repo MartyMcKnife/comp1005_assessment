@@ -75,6 +75,8 @@ def main(blocksize=30, col_count=2):
                 except IndexError as e:
                     print("Error when adding item. Skipping...")
                     print(e)
+                except KeyError:
+                    print(f"No item type found for {vals[2]}! Skipping...")
 
         # pad out our grid if the user does not supply enough boxes
         while blocks_added % col_count != 0:

@@ -14,13 +14,13 @@ def generate_image(b, s, mshape, heat=False):
             ry_start,
         ) = block.get_topleft()
         # update grid to represent whats expected in that corner
-        grid[ry_start : ry_start + s, cx_start : cx_start + s] = block.generate_grid(
-            heat
-        )
+        grid[
+            ry_start : ry_start + s, cx_start : cx_start + s
+        ] = block.generate_grid(heat)
     return grid
 
 
 # maps a size value (0~n) between 1 and 0
-# used to make the size of the object play a part in how quick it heats up
+# used to make the dial down the impact of the thermal coeff.
 def sigmoid(x):
-    return 1 / (1 + math.exp(-2 / x))
+    return 1 / (1 + math.exp(-10 / x))

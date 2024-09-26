@@ -6,4 +6,5 @@ id,class,type,size,x_pos,y_pos,owned_by
 6,item,rock,3,5,15,1
 7,item,house,11,12,6,2
 8,item,house,6,16,15,2
-9,item,fire,6,20,20,2
+10,item,road,3,16,15,2
+7,item,house,8,26,16,2
