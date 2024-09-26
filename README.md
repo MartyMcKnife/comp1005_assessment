@@ -13,6 +13,8 @@ Created for COMP1005 Assessment. This program creates both an RGB and Heatmap si
 
 Inside the directory there are two configuration files: `config.ini` and `input.csv`
 
+### config.ini
+
 `config.ini` contains the broad simulation settings
 
 ##### Simulation Settings
@@ -27,6 +29,8 @@ These values define the intial temperatures for each item
 ##### Thermal Coeffs
 
 These values define the thermal coefficient of each item
+
+### input.csv
 
 `input.csv` contains the definition for how the map works.
 _Please ensure that any blocks are defined before any items_
