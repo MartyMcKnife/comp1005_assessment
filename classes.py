@@ -95,7 +95,7 @@ class Fire(Item):
 class Road(Item):
     def __init__(self, pos, size):
         name = "Road"
-        super().__init__(pos, 45, size, name)
+        super().__init__(pos, 40, size, name)
 
 
 item_lookup = {
@@ -253,9 +253,15 @@ class Ice(Block):
         super().__init__(size, topleft, 50, 0.2)
 
 
+class Parkland(Block):
+    def __init__(self, size, topleft):
+        super().__init__(size, topleft, 15, 0.75)
+
+
 block_lookup = {
     "water": Water,
     "earth": Earth,
     "dirt": Dirt,
     "ice": Ice,
+    "parkland": Parkland,
 }

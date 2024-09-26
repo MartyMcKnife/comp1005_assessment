@@ -24,12 +24,7 @@ from utils import generate_image
 
 THERMAL_COL = "hot"
 RGB_COL = "terrain"
-heat = False
 timestep = 1
-
-
-# holds our matplotlib color bar so we can reset it
-cb = ""
 
 
 def setup():
@@ -111,13 +106,13 @@ def main(blocksize=30, col_count=2):
                     w.write(temp["id"] + ",")
                     item_temps.append(temp["temp"])
 
-                    ax[1].plot(
+                    ax[2].plot(
                         temp["temp"],
                         label=temp["id"],
                         color=cm.hot(Normalize(0, 50)(temp["col"])),
                     )
-                    ax[1].set_xlabel("Timestep")
-                    ax[1].set_ylabel("Temperature")
+                    ax[2].set_xlabel("Timestep")
+                    ax[2].set_ylabel("Temperature")
             # clear new line from headers
             w.write("\n")
             # use the zip function to pair the temps together:
@@ -127,16 +122,13 @@ def main(blocksize=30, col_count=2):
 
     # handler to update grid with button
     def update_grid(e):
-        global heat
-        cmap = THERMAL_COL if heat else RGB_COL
-
         for block in blocks:
             block.update_heatmap()
-        ax[0].imshow(
-            generate_image(blocks, blocksize, map_shape, heat),
+        ax[1].imshow(
+            generate_image(blocks, blocksize, map_shape, True),
             vmin=0,
             vmax=50,
-            cmap=cmap,
+            cmap=THERMAL_COL,
         )
 
         update_temp_plot()
@@ -146,51 +138,36 @@ def main(blocksize=30, col_count=2):
 
         plt.draw()
 
-    def update_heatmode(e):
-        global heat
-        heat = not heat
+    fig, ax = plt.subplots(1, 3)
 
-        # work out our color paletter
-        cmap = THERMAL_COL if heat else RGB_COL
-
-        # draw the image
-        img = ax[0].imshow(
-            generate_image(blocks, blocksize, map_shape, heat),
-            vmin=0,
-            vmax=50,
-            cmap=cmap,
-        )
-
-        # redraw the colorbar
-        global cb
-        cb.remove()
-        cb = plt.colorbar(img)
-        plt.draw()
-
-    fig, ax = plt.subplots(1, 2)
-
-    img = ax[0].imshow(
-        generate_image(blocks, blocksize, map_shape, heat),
+    rgb = ax[0].imshow(
+        generate_image(blocks, blocksize, map_shape, False),
         vmin=0,
         vmax=50,
-        cmap=THERMAL_COL if heat else RGB_COL,
+        cmap=RGB_COL,
     )
-    global cb
-    cb = plt.colorbar(img)
+    # fractions taken from https://stackoverflow.com/questions/18195758/set-matplotlib-colorbar-size-to-match-graph
+    plt.colorbar(rgb, fraction=0.046, pad=0.04)
+
+    heat = ax[1].imshow(
+        generate_image(blocks, blocksize, map_shape, True),
+        vmin=0,
+        vmax=50,
+        cmap=THERMAL_COL,
+    )
+    # as above
+    plt.colorbar(heat, fraction=0.046, pad=0.04)
 
     update_temp_plot()
 
-    ax[1].legend()
+    ax[2].legend()
 
     # draws simulate button
-    baxes = fig.add_axes([0.3, 0.01, 0.1, 0.075])
+    baxes = fig.add_axes([0.05, 0.01, 0.1, 0.075])
     bnext = Button(baxes, "Simulate")
     bnext.on_clicked(update_grid)
 
-    # draws heatmap toggle button
-    caxes = fig.add_axes([0.05, 0.01, 0.15, 0.075])
-    c_heat = Button(caxes, "Heatmap?")
-    c_heat.on_clicked(update_heatmode)
+    fig.set_figwidth(10)
 
     fig.subplots_adjust(bottom=-0.2)
 
