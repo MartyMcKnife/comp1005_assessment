@@ -16,8 +16,10 @@ from matplotlib.widgets import Button
 from pathlib import Path
 import os
 import shutil
+from math import ceil
+from configparser import ConfigParser
 
-from classes import Tree, House, Earth, Water
+from classes import item_lookup, block_lookup, Water
 from utils import generate_image
 
 THERMAL_COL = "hot"
@@ -25,34 +27,86 @@ RGB_COL = "terrain"
 heat = False
 timestep = 1
 
+
 # holds our matplotlib color bar so we can reset it
 cb = ""
 
 
-def main():
+def setup():
+    config = ConfigParser()
+    config.read("config.ini")
+    settings = config["SIMULATION_SETTINGS"]
+    resolution = settings.get("Resolution", 30)
+    cols = settings.get("Columns", 2)
+    return int(resolution), int(cols)
+
+
+def main(blocksize=30, col_count=2):
     blocksize = 30  # defines resolution of heatmap
-    map_shape = (2, 1)
     blocks = []
     img_path = os.getcwd() + "/output_images"
 
-    blocks.append(Water(blocksize, (0, 0)))
-    blocks.append(Earth(blocksize, (0, blocksize)))
+    blocks_added = 0
 
-    blocks[0].add_item(Tree((10, 10), 3))
-    blocks[0].add_item(Tree((5, 15), 3))
-    blocks[1].add_item(House((12, 6), 5))
-    shutil.rmtree(img_path)
+    with open("input.csv", "r") as f:
+        for line in f.readlines():
+            vals = line.rstrip().split(",")
+            if vals[1].lower() == "block":
+                try:
+                    blocks.append(
+                        block_lookup[vals[2]](
+                            blocksize,
+                            (
+                                blocksize * ((blocks_added) // col_count),
+                                blocksize * (blocks_added % col_count),
+                            ),
+                        )
+                    )
+                    blocks_added += 1
+                except IndexError:
+                    print("No block type found! Skipping...")
+            elif vals[1].lower() == "item":
+                try:
+                    blocks[int(vals[6]) - 1].add_item(
+                        item_lookup[vals[2]]((int(vals[4]), int(vals[5])), int(vals[3]))
+                    )
+                except IndexError as e:
+                    print("Error when adding item. Skipping...")
+                    print(e)
+
+        # pad out our grid if the user does not supply enough boxes
+        while blocks_added % col_count != 0:
+            print(blocks_added)
+            blocks.append(
+                Water(
+                    blocksize,
+                    (
+                        blocksize * ((blocks_added) // col_count),
+                        blocksize * (blocks_added % col_count),
+                    ),
+                ),
+            )
+            blocks_added += 1
+
+    map_shape = (col_count, ceil(blocks_added / col_count))
+
+    try:
+        shutil.rmtree(img_path)
+    except FileNotFoundError:
+        print("Output image directory not found. Creating...")
+
     Path(img_path).mkdir(parents=True, exist_ok=True)
 
     # handler to draw temp grip
     def update_temp_plot():
-        with open("output.txt", "w+") as w:
+        with open("output.csv", "w+") as w:
             for block in blocks:
                 temps = block.get_item_temps()
                 for temp in temps:
                     w.write(temp["id"] + "\n")
                     for t in temp["temp"]:
-                        w.write(str(round(t, 2)) + "\n")
+                        w.write(str(round(t, 2)) + ",")
+                    w.write("\n")
                     ax[1].plot(
                         temp["temp"],
                         label=temp["id"],
@@ -136,4 +190,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    resolution, cols = setup()
+    main(resolution, cols)

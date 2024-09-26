@@ -25,7 +25,6 @@ class Item:
 
     def get_image(self, heat=False):
         s = self.size
-        # print(s)
         img = np.ones((s, s)) * self.temp if heat else self.colour_code
         return img
 
@@ -63,7 +62,7 @@ class Rock(Item):
 class House(Item):
     def __init__(self, pos, size):
         name = "House"
-        thermal_coeff = 0.3
+        thermal_coeff = 0.9
         super().__init__(pos, 25, size, name, thermal_coeff, 25)
 
 
@@ -79,6 +78,15 @@ class Fire(Item):
         name = "Fire"
         thermal_coeff = 1
         super().__init__(pos, 22, size, name, thermal_coeff, 25)
+
+
+item_lookup = {
+    "tree": Tree,
+    "rock": Rock,
+    "house": House,
+    "person": Person,
+    "fire": Fire,
+}
 
 
 class Block:
@@ -217,3 +225,11 @@ class Dirt(Block):
 class Ice(Block):
     def __init__(self, size, topleft):
         super().__init__(size, topleft, 50, 0.3)
+
+
+block_lookup = {
+    "water": Water,
+    "earth": Earth,
+    "dirt": Dirt,
+    "ice": Ice,
+}
