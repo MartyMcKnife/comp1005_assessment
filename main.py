@@ -63,8 +63,8 @@ def main(blocksize=30, col_count=2):
                         )
                     )
                     blocks_added += 1
-                except IndexError:
-                    print("No block type found! Skipping...")
+                except KeyError:
+                    print(f"No block type found for {vals[2]}! Skipping...")
             elif vals[1].lower() == "item":
                 try:
                     blocks[int(vals[6]) - 1].add_item(
@@ -78,7 +78,6 @@ def main(blocksize=30, col_count=2):
 
         # pad out our grid if the user does not supply enough boxes
         while blocks_added % col_count != 0:
-            print(blocks_added)
             blocks.append(
                 Water(
                     blocksize,

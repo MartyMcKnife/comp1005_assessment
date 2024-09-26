@@ -13,15 +13,25 @@ Version History:
 import numpy as np
 from random import uniform
 
+from configparser import ConfigParser
+
 
 class Item:
-    def __init__(self, pos, colour, size, name, thermal_coeff, temp):
+    def __init__(self, pos, colour, size, name):
         self.pos = pos
         self.colour_code = colour
         self.size = size  # symmetrical, if noy, need height and width
         self.name = name
-        self.thermal = thermal_coeff
+        # read our intial temperature from our config settings
+        # if none are provided default to 25degs
+        # also read thermal coeffs - defaults to 0.5
+        config = ConfigParser()
+        config.read("config.ini")
+        settings = config["INITIAL_TEMPS"]
+        temp = int(settings.get(self.name, 25))
+        thermal_coeff = int(settings.get(self.name, 0.5))
         self.temp = temp
+        self.thermal = thermal_coeff
 
     def get_image(self, heat=False):
         s = self.size
@@ -42,42 +52,42 @@ class Item:
         x_len, y_len = self.get_shape()
 
         # not very elegant way to check if item is inside bounding box
-        return x_top <= x and x <= x_top + x_len and y_top <= y and y <= y_top + y_len
+        return (
+            x_top <= x
+            and x <= x_top + x_len
+            and y_top <= y
+            and y <= y_top + y_len
+        )
 
 
 class Tree(Item):
     def __init__(self, pos, size):
         name = "Tree"
-        thermal_coeff = 0.8
-        super().__init__(pos, 37.5, size, name, thermal_coeff, 25)
+        super().__init__(pos, 37.5, size, name)
 
 
 class Rock(Item):
     def __init__(self, pos, size):
         name = "Rock"
-        thermal_coeff = 0.4
-        super().__init__(pos, 45, size, name, thermal_coeff, 25)
+        super().__init__(pos, 45, size, name)
 
 
 class House(Item):
     def __init__(self, pos, size):
         name = "House"
-        thermal_coeff = 0.9
-        super().__init__(pos, 25, size, name, thermal_coeff, 25)
+        super().__init__(pos, 25, size, name)
 
 
 class Person(Item):
     def __init__(self, pos, size):
         name = "Person"
-        thermal_coeff = 0.1
-        super().__init__(pos, 22, size, name, thermal_coeff, 25)
+        super().__init__(pos, 22, size, name)
 
 
 class Fire(Item):
     def __init__(self, pos, size):
         name = "Fire"
-        thermal_coeff = 1
-        super().__init__(pos, 22, size, name, thermal_coeff, 25)
+        super().__init__(pos, 30, size, name)
 
 
 item_lookup = {
@@ -123,9 +133,13 @@ class Block:
 
         img_col = item.get_image()  # 1D image of item (not 3D rgb)
         img_heat = item.get_image(True)
-
-        self.grid[ry_start:ry_stop, cx_start:cx_stop] = img_col
-        self.heatmap[ry_start:ry_stop, cx_start:cx_stop] = img_heat
+        try:
+            self.grid[ry_start:ry_stop, cx_start:cx_stop] = img_col
+            self.heatmap[ry_start:ry_stop, cx_start:cx_stop] = img_heat
+        except ValueError:
+            print(
+                "Could not parse grid size! Please check input sizes do not exceed block dimensions. Will attempt to continue but weird things may happen!"
+            )
 
     def generate_grid(self, heat=False):
         # only generate our grid if we don't have it
@@ -166,11 +180,13 @@ class Block:
 
             # update the cells temp based on the average of the surrounding squares, and the cells thermal coefficient
             temps = [top_temp, bottom_temp, left_temp, right_temp]
-            # we divide our cell's thermal coefficient by the items thermal coeff to get a nice ratio between how much heat we gain vs loss
+            # we multiply our cell's thermal coefficient by the items thermal coeff to get a nice ratio between how much heat we gain vs loss
+            # we take just less than the reciprocal of this to allow for slightly negative heat transfer, but it still allows temperature to be shared
             # we also multiply by a slight amount of noise
             temp_grid[y, x] = (
                 np.average(temps)
-                * (self.thermal_coeff / item_thermal_coeff)
+                * 0.9
+                / (self.thermal_coeff * item_thermal_coeff)
                 * uniform(0.8, 1)
             )
         self.heatmap = temp_grid
@@ -184,7 +200,9 @@ class Block:
             cx_stop = cx_start + img_y
             ry_stop = ry_start + img_x
 
-            avg_temp = np.average(self.heatmap[ry_start:ry_stop, cx_start:cx_stop])
+            avg_temp = np.average(
+                self.heatmap[ry_start:ry_stop, cx_start:cx_stop]
+            )
             # loop through and check to see if the temp has already been added
             updated = False
             for item_temp in self.item_temps:
@@ -209,12 +227,12 @@ class Block:
 # instantiate our class to create the environment
 class Water(Block):
     def __init__(self, size, topleft):
-        super().__init__(size, topleft, 0, 0.4)
+        super().__init__(size, topleft, 0, 0.3)
 
 
 class Earth(Block):
     def __init__(self, size, topleft):
-        super().__init__(size, topleft, 12.5, 0.9)
+        super().__init__(size, topleft, 12.5, 0.8)
 
 
 class Dirt(Block):
@@ -224,7 +242,7 @@ class Dirt(Block):
 
 class Ice(Block):
     def __init__(self, size, topleft):
-        super().__init__(size, topleft, 50, 0.3)
+        super().__init__(size, topleft, 50, 0.2)
 
 
 block_lookup = {
