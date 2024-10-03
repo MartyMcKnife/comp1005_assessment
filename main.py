@@ -30,6 +30,8 @@ warnings.filterwarnings("ignore")
 THERMAL_COL = "hot"
 RGB_COL = "terrain"
 timestep = 1
+sweeps = 1
+sweep_handler = ""
 
 
 # read our configuration files
@@ -39,10 +41,11 @@ def setup():
     settings = config["SIMULATION_SETTINGS"]
     resolution = settings.get("Resolution", 30)
     cols = settings.get("Rows", 2)
-    return int(resolution), int(cols)
+    sweep = settings.getboolean("Parameter_sweep", False)
+    return int(resolution), int(cols), bool(sweep)
 
 
-def main(blocksize=30, col_count=2):
+def main(blocksize=30, col_count=2, sweep=False):
     blocksize = 30  # defines resolution of heatmap
     blocks = []
     img_path = os.getcwd() + "/output_images"
@@ -80,9 +83,7 @@ def main(blocksize=30, col_count=2):
                 try:
                     # really unelegant code but just adds the item to the block using the user defined values
                     blocks[int(vals[6]) - 1].add_item(
-                        item_lookup[vals[2]](
-                            (int(vals[4]), int(vals[5])), int(vals[3])
-                        )
+                        item_lookup[vals[2]]((int(vals[4]), int(vals[5])), int(vals[3]))
                     )
                 # handle index errror - maybe the user typed the wrong block id?
                 except IndexError as e:
@@ -118,7 +119,8 @@ def main(blocksize=30, col_count=2):
 
     # handler to draw temp grid
     def update_temp_plot():
-        with open("output.csv", "w+") as w:
+        global sweeps
+        with open(f"output_{sweeps}.csv", "w+") as w:
             item_temps = []
             for block in blocks:
                 temps = block.get_item_temps()
@@ -126,7 +128,6 @@ def main(blocksize=30, col_count=2):
                 for temp in temps:
                     w.write(temp["id"] + ",")
                     item_temps.append(temp["temp"])
-
                     ax[2].plot(
                         temp["temp"],
                         label=temp["id"],
@@ -148,15 +149,40 @@ def main(blocksize=30, col_count=2):
         ax[1].imshow(
             generate_image(blocks, blocksize, map_shape, True),
             vmin=0,
-            vmax=50,
+            vmax=100,
             cmap=THERMAL_COL,
         )
 
         update_temp_plot()
         global timestep
         timestep += 1
-        fig.savefig(img_path + "/Output" + str(timestep))
+        fig.savefig(
+            img_path + "/Output_Sweep" + str(sweeps) + "Timestep" + str(timestep)
+        )
 
+        plt.draw()
+
+    def update_sweep_steps(e):
+        for block in blocks:
+            block.update_items_start_temp()
+
+        ax[1].imshow(
+            generate_image(blocks, blocksize, map_shape, True),
+            vmin=0,
+            vmax=100,
+            cmap=THERMAL_COL,
+        )
+
+        global timestep, sweeps, sweep_handler
+        sweeps += 1
+        timestep = 0
+
+        sweep_handler.set_text(f"Sweeps: {sweeps}")
+
+        # reset out temp plot
+        ax[2].cla()
+        update_temp_plot()
+        ax[2].legend()
         plt.draw()
 
     fig, ax = plt.subplots(1, 3)
@@ -173,7 +199,7 @@ def main(blocksize=30, col_count=2):
     heat = ax[1].imshow(
         generate_image(blocks, blocksize, map_shape, True),
         vmin=0,
-        vmax=50,
+        vmax=100,
         cmap=THERMAL_COL,
     )
     # as above
@@ -182,15 +208,21 @@ def main(blocksize=30, col_count=2):
     update_temp_plot()
 
     ax[2].legend()
+    global sweep_handler
+    sweep_handler = plt.figtext(0.45, 0.01, f"Sweeps: {sweeps}")
 
     # draws simulate button
-    baxes = fig.add_axes([0.05, 0.01, 0.1, 0.075])
+    baxes = fig.add_axes([0.01, 0, 0.1, 0.075])
     bnext = Button(baxes, "Simulate")
     bnext.on_clicked(update_grid)
 
-    fig.set_figwidth(10)
+    # draw next sweep button
+    if sweep:
+        caxes = fig.add_axes([0.2, 0, 0.1, 0.075])
+        cnext = Button(caxes, "Sweep")
+        cnext.on_clicked(update_sweep_steps)
 
-    fig.subplots_adjust(bottom=-0.25)
+    fig.set_figwidth(10)
 
     fig.tight_layout()
     fig.savefig(img_path + "/Output1.png")
@@ -198,5 +230,5 @@ def main(blocksize=30, col_count=2):
 
 
 if __name__ == "__main__":
-    resolution, cols = setup()
-    main(resolution, cols)
+    resolution, cols, sweep = setup()
+    main(resolution, cols, sweep)

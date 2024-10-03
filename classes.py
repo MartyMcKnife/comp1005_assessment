@@ -29,9 +29,11 @@ class Item:
         # also read thermal coeffs - defaults to 0.5
         config = ConfigParser()
         config.read("config.ini")
-        settings = config["INITIAL_TEMPS"]
-        temp = int(settings.get(self.name, 25))
-        thermal_coeff = int(settings.get(self.name, 0.5))
+        temps = config["INITIAL_TEMPS"]
+        coeffs = config["THERMAL_COEFFS"]
+
+        temp = int(temps.get(self.name, 25))
+        thermal_coeff = float(coeffs.get(self.name, 0.5))
         self.temp = temp
         self.thermal = thermal_coeff
 
@@ -54,18 +56,21 @@ class Item:
         x_len, y_len = self.get_shape()
 
         # not very elegant way to check if item is inside bounding box
-        return (
-            x_top <= x
-            and x <= x_top + x_len
-            and y_top <= y
-            and y <= y_top + y_len
-        )
+        return x_top <= x and x <= x_top + x_len and y_top <= y and y <= y_top + y_len
+
+    # update our items starting temps
+    def increase_temp(self):
+        config = ConfigParser()
+        config.read("config.ini")
+        settings = config["SIMULATION_SETTINGS"]
+        step = settings.get("Temp_steps", 5)
+        self.temp += int(step)
 
 
 class Tree(Item):
     def __init__(self, pos, size):
         name = "Tree"
-        super().__init__(pos, 37.5, size, name)
+        super().__init__(pos, 18.5, size, name)
 
 
 class Rock(Item):
@@ -208,9 +213,7 @@ class Block:
             cx_stop = cx_start + img_y
             ry_stop = ry_start + img_x
 
-            avg_temp = np.average(
-                self.heatmap[ry_start:ry_stop, cx_start:cx_stop]
-            )
+            avg_temp = np.average(self.heatmap[ry_start:ry_stop, cx_start:cx_stop])
             # loop through and check to see if the temp has already been added
             updated = False
             for item_temp in self.item_temps:
@@ -230,6 +233,14 @@ class Block:
                 )
 
         return self.item_temps
+
+    def update_items_start_temp(self):
+        # update our temps
+        for item in self.items:
+            item.increase_temp()
+        # reset our grid for next time
+        self.grid_gen = False
+        self.item_temps = []
 
 
 # instantiate our class to create the environment
