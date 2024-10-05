@@ -83,7 +83,9 @@ def main(blocksize=30, col_count=2, sweep=False):
                 try:
                     # really unelegant code but just adds the item to the block using the user defined values
                     blocks[int(vals[6]) - 1].add_item(
-                        item_lookup[vals[2]]((int(vals[4]), int(vals[5])), int(vals[3]))
+                        item_lookup[vals[2]](
+                            (int(vals[4]), int(vals[5])), int(vals[3])
+                        )
                     )
                 # handle index errror - maybe the user typed the wrong block id?
                 except IndexError as e:
@@ -154,10 +156,14 @@ def main(blocksize=30, col_count=2, sweep=False):
         )
 
         update_temp_plot()
-        global timestep
+        global timestep, sweeps
         timestep += 1
         fig.savefig(
-            img_path + "/Output_Sweep" + str(sweeps) + "Timestep" + str(timestep)
+            img_path
+            + "/Output_Sweep"
+            + str(sweeps)
+            + "Timestep"
+            + str(timestep)
         )
 
         plt.draw()
@@ -175,7 +181,7 @@ def main(blocksize=30, col_count=2, sweep=False):
 
         global timestep, sweeps, sweep_handler
         sweeps += 1
-        timestep = 0
+        timestep = 1
 
         sweep_handler.set_text(f"Sweeps: {sweeps}")
 
@@ -183,6 +189,15 @@ def main(blocksize=30, col_count=2, sweep=False):
         ax[2].cla()
         update_temp_plot()
         ax[2].legend()
+
+        fig.savefig(
+            img_path
+            + "/Output_Sweep"
+            + str(sweeps)
+            + "Timestep"
+            + str(timestep)
+        )
+
         plt.draw()
 
     fig, ax = plt.subplots(1, 3)
@@ -225,7 +240,9 @@ def main(blocksize=30, col_count=2, sweep=False):
     fig.set_figwidth(10)
 
     fig.tight_layout()
-    fig.savefig(img_path + "/Output1.png")
+    fig.savefig(
+        img_path + "/Output_Sweep" + str(sweeps) + "Timestep" + str(timestep)
+    )
     plt.show()
 
 
